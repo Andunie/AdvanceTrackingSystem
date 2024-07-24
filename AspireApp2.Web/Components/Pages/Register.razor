@@ -1,0 +1,81 @@
+﻿@page "/register"
+
+@using Microsoft.AspNetCore.Components.Forms
+@using AspireApp2.Web.Model
+@using System.ComponentModel.DataAnnotations
+@inject AppDbContext DbContext
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<EditForm Model="kullanici" OnValidSubmit="HandleValidSubmit">
+    <MudGrid Class="min-vh-100 d-flex justify-center align-items-center">
+        <MudItem xs="12" sm="6" lg="4">
+            <MudCard Class="pa-4 mx-auto">
+                <MudCardContent>
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <h3> Register </h3>
+
+                    <MudTextField @bind-Value="kullanici.KullaniciAd" Label="Name" Variant="Variant.Outlined" Required="true" />
+                    <MudTextField @bind-Value="kullanici.KullaniciSoyad" Label="Surname" Variant="Variant.Outlined" Required="true" />
+                    <MudTextField @bind-Value="kullanici.KullaniciSifre" Label="Password" Variant="Variant.Outlined" InputType="InputType.Password" Required="true" />
+
+                    <MudSelect T="string" Label="Role" Value="kullanici.KullaniciRol" Variant="Variant.Outlined" ValueChanged="UpdateRolID" Required="true">
+                        <MudSelectItem Value="@("Admin")">Admin</MudSelectItem>
+                        <MudSelectItem Value="@("Employee")">Employee</MudSelectItem>
+                        <MudSelectItem Value="@("User")">User</MudSelectItem>
+                    </MudSelect>
+
+                    <MudTextField @bind-Value="kullanici.RolID" Label="RoleID" Variant="Variant.Outlined" Required="true" Disabled="true" />
+
+                </MudCardContent>
+                <MudCardActions Class="d-flex flex-column align-items-stretch">
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Dark">Kaydol</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</EditForm>
+
+
+@code {
+    private Kullanici kullanici { get; set; } = new Kullanici();
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            DbContext.Kullanicilar.Add(kullanici);
+            await DbContext.SaveChangesAsync();
+            Snackbar.Add("Kayıt Başarılı!", Severity.Success);
+            await Task.Delay(1000);
+            Navigation.NavigateTo("/register", true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    private void UpdateRolID(string selectedRole)
+    {
+        switch (selectedRole)
+        {
+            case "Admin":
+                kullanici.RolID = 1;
+                break;
+            case "Employee":
+                kullanici.RolID = 2;
+                break;
+            case "User":
+                kullanici.RolID = 3;
+                break;
+            default:
+                kullanici.RolID = 0;
+                break;
+        }
+
+        kullanici.KullaniciRol = selectedRole;
+    }
+}

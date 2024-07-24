@@ -1,0 +1,116 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+@using AspireApp2.Web.Model
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.EntityFrameworkCore
+@inject AppDbContext DbContext
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<MudDialog>
+    <DialogContent>
+        <EditForm Model="teminat" OnValidSubmit="HandleValidSubmit">
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker @bind-Date="teminat.TeminatMektubuTarihi" DateFormat="yyyy-MM-dd" Label="Teminat Mektubu Tarihi" Variant="Variant.Outlined" Required="true" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="teminat.TeminatMektubuNo" Label="Teminat Mektup No" Variant="Variant.Outlined" Required="true" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker @bind-Date="teminat.TeslimTarihi" DateFormat="yyyy-MM-dd" Label="Teslim Tarihi" Variant="Variant.Outlined" Required="true" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="string" @bind-Value="teminat.TeminatMektubuDurumu" Label="Durum" Variant="Variant.Outlined" Required="true">
+                        <MudSelectItem Value="@("Kesin Teminat")">Kesin Teminat</MudSelectItem>
+                        <MudSelectItem Value="@("Avans Teminat")">Avans Teminat</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="string" @bind-Value="teminat.Banka" Label="Banka" Variant="Variant.Outlined" Required="true">
+                        <MudSelectItem Value="@("Akbank")">Akbank</MudSelectItem>
+                        <MudSelectItem Value="@("DenizBank")">DenizBank</MudSelectItem>
+                        <MudSelectItem Value="@("Fibabanka")">Fibabanka</MudSelectItem>
+                        <MudSelectItem Value="@("Garanti BBVA")">Garanti BBVA</MudSelectItem>
+                        <MudSelectItem Value="@("Halkbank")">Halkbank</MudSelectItem>
+                        <MudSelectItem Value="@("HSBC")">HSBC</MudSelectItem>
+                        <MudSelectItem Value="@("ING Bank")">ING Bank</MudSelectItem>
+                        <MudSelectItem Value="@("İş Bankası")">İş Bankası</MudSelectItem>
+                        <MudSelectItem Value="@("QNB Finansbank")">QNB Finansbank</MudSelectItem>
+                        <MudSelectItem Value="@("ŞekerBank")">ŞekerBank</MudSelectItem>
+                        <MudSelectItem Value="@("TEB")">TEB</MudSelectItem>
+                        <MudSelectItem Value="@("VakıfBank")">VakıfBank</MudSelectItem>
+                        <MudSelectItem Value="@("Yapı Kredi")">Yapı Kredi</MudSelectItem>
+                        <MudSelectItem Value="@("Ziraat Bankası")">Ziraat Bankası</MudSelectItem>
+
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="teminat.TeminatıGonderenFirma" Label="Gönderen Firma" Variant="Variant.Outlined" Required="true" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="formattedTeminatTutari" Label="Tutar" Variant="Variant.Outlined" Required="true" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="string" @bind-Value="teminat.TeminatParaBirimi" Label="Para Birimi" Variant="Variant.Outlined" Required="true">
+                        <MudSelectItem Value="@("TRY")">TRY</MudSelectItem>
+                        <MudSelectItem Value="@("USD")">USD</MudSelectItem>
+                        <MudSelectItem Value="@("EUR")">EUR</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker @bind-Date="teminat.TeminatBitisTarihi" DateFormat="yyyy-MM-dd" Label="Bitiş Tarihi" Variant="Variant.Outlined" Required="true" />
+                </MudItem>
+            </MudGrid>
+
+            <MudGrid>
+                <MudItem xs="12" class="d-flex justify-end mt-4">
+                    <MudButton OnClick="Cancel">İptal</MudButton>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Ekle</MudButton>
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    private Teminat teminat { get; set; } = new Teminat();
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            DbContext.Teminatlar.Add(teminat);
+            await DbContext.SaveChangesAsync();
+            Snackbar.Add("Veri Ekleme Başarılı!", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+            await Task.Delay(1000);
+            Navigation.NavigateTo("/advanceTracking");
+        }
+        catch (Exception ex)
+        {   
+            Console.WriteLine(ex.Message);
+            Snackbar.Add("Veri eklenirken hata oluştu.", Severity.Error);
+        }   
+    }
+
+    private string formattedTeminatTutari
+    {
+        get => teminat.TeminatTutari?.ToString("F2") ?? string.Empty;
+        set
+        {
+            if (decimal.TryParse(value, out var result))
+            {
+                teminat.TeminatTutari = result;
+            }
+            else
+            {
+                teminat.TeminatTutari = null;
+            }
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

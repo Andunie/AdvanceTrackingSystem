@@ -1,0 +1,67 @@
+﻿@inherits LayoutComponentBase
+@using System.Net.Http.Json
+@using AspireApp2.Web.Model
+@using Microsoft.EntityFrameworkCore
+@using MudBlazor
+@using System.Text.Json
+@using static MudBlazor.CategoryTypes
+@inject IDialogService Dialog
+@inject HttpClient httpClient
+@inject AppDbContext DbContext
+@inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+            <NavLink class="nav-link" href="login" @onclick=LogoutCurrentUser_Refresh>
+                <span class="bi bi-house-door-fill" aria-hidden="true" ></span> Logout
+            </NavLink>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+@code
+{
+    private Kullanici currentUserLayout;
+
+    private async Task LogoutCurrentUser_Refresh()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "currentUser");
+            Navigation.NavigateTo("/login", forceLoad: true);
+        }
+        catch (Exception)
+        {
+            
+            throw;
+        }
+    }
+
+    private void RefreshPage()
+    {
+        Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+    }
+}

@@ -1,0 +1,113 @@
+﻿@page "/login"
+
+<PageTitle>Login</PageTitle>
+
+@using Microsoft.AspNetCore.Components.Forms
+@using AspireApp2.Web.Model
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.EntityFrameworkCore
+@inject AppDbContext DbContext  
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+
+<EditForm Model="kullaniciModel" OnValidSubmit="HandleValidSubmit">
+    <MudGrid Class="min-vh-100 d-flex justify-center align-items-center">
+        <MudItem xs="12" sm="6" lg="4">
+            <MudCard Class="pa-4 mx-auto">
+                <MudCardContent>
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <h3 class="mb-1">Login</h3>
+
+                    <MudTextField @bind-Value="kullaniciModel.KullaniciAd" Label="Username" Variant="Variant.Outlined" Required="true" />
+                    <MudTextField @bind-Value="kullaniciModel.KullaniciSifre" Label="Password" Variant="Variant.Outlined" InputType="InputType.Password" Required="true" />
+
+                </MudCardContent>
+                <MudCardActions Class="d-flex flex-column align-items-stretch">
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Dark" Class="mb-3">Log in</MudButton>
+                    <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Dark" OnClick="KaydolmaSayfasina">Sign up</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</EditForm>
+
+<style>
+    .mud-card-actions > .mud-button {
+        width: 100%;
+    }
+</style>
+
+@code
+{
+    private Kullanici kullaniciModel { get; set; } = new Kullanici();
+
+    protected override async Task OnInitializedAsync()
+    {
+       await CheckLoggedInUser();
+    }
+
+    private async Task CheckLoggedInUser()
+    {
+        try
+        {
+            var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "currentUser");
+            if (!string.IsNullOrEmpty(json))
+            {
+                Navigation.NavigateTo("/advanceTracking");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        // Giriş Kontrolü
+        try
+        {
+            var user = await DbContext.Kullanicilar.FirstOrDefaultAsync(u => u.KullaniciAd == kullaniciModel.KullaniciAd && u.KullaniciSifre == kullaniciModel.KullaniciSifre);
+
+            if (user != null)
+            {
+                kullaniciModel.KullaniciId = user.KullaniciId;
+                kullaniciModel.KullaniciSoyad = user.KullaniciSoyad;
+                kullaniciModel.KullaniciRol = user.KullaniciRol;
+                kullaniciModel.RolID = user.RolID;
+
+
+                Snackbar.Add("Giriş başarılı!", Severity.Success);
+
+                // Kullanıcı bilgilerini local storage'a kaydet
+                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "currentUser", JsonSerializer.Serialize(kullaniciModel)); 
+
+                //Yönlendirme
+                Navigation.NavigateTo("/advanceTracking");    
+            }
+            else
+            {
+                Snackbar.Add("Kullanıcı adı ya da şifre hatalı! Lütfen tekrar deneyin.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    private void KaydolmaSayfasina()
+    {
+        Navigation.NavigateTo("/Register", true);
+        RefreshPage();
+    }
+
+    private void RefreshPage()
+    {
+        Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+    }
+}

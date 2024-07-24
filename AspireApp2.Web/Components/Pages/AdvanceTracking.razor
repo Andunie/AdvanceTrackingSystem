@@ -1,0 +1,227 @@
+﻿@page "/advancetracking"
+
+<PageTitle>Advance Tracking System</PageTitle>
+
+@using System.Net.Http.Json
+@using AspireApp2.Web.Model
+@using Microsoft.EntityFrameworkCore
+@using MudBlazor
+@using System.Text.Json
+@using static MudBlazor.CategoryTypes
+@inject IDialogService Dialog
+@inject HttpClient httpClient
+@inject AppDbContext DbContext
+@inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+
+<PageTitle>Advance Tracking</PageTitle>
+
+<MudButton @onclick="OpenDialogAsync" Variant="Variant.Filled" Color="Color.Primary" Class="mt-3">
+    Ekle
+</MudButton>
+<MudIconButton Icon="@Icons.Material.Filled.Refresh" Color="Color.Dark" OnClick="RefreshPage" Class="mt-3 ml-1" />
+
+@if (currentUser != null)
+{
+    if (currentUser.KullaniciRol == "Admin")
+    {   
+        <MudDataGrid T="AspireApp2.Web.Model.Teminat" MultiSelection="true" Items="@teminatlar" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Class="mt-5"
+                     Hideable="true" RowClick="@RowClicked" RowContextMenuClick="RowRightClicked" SelectedItemsChanged="@SelectedItemsChanged">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Avans Takibi</MudText>
+                <MudSpacer />
+                <MudTextField @bind-Value="_searchString" Placeholder="Ara" Adornment="Adornment.Start" Immediate="true"
+                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <Columns>
+                <SelectColumn T="AspireApp2.Web.Model.Teminat" />
+                <PropertyColumn Property="x => x.TeminatId" Title="Id" Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.TeminatMektubuTarihi" Title="Mektup Tarihi" Sortable="true" Filterable="true" Format="d" />
+                <PropertyColumn Property="x => x.TeminatMektubuNo" Title="Mektup No" Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.TeslimTarihi" Title="Teslim Tarihi" Sortable="true" Filterable="true" Format="d" />
+                <PropertyColumn Property="x => x.TeminatMektubuDurumu" Title="Durum" Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.Banka" Title="Banka" Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.TeminatıGonderenFirma" Title="Gönderen Firma" Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.TeminatTutari" Title="Tutar" Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.TeminatParaBirimi" Title="Para Birimi" Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.TeminatBitisTarihi" Title="Bitiş Tarihi" Sortable="true" Filterable="true" Format="d" />
+                <TemplateColumn Title="Statement">
+                    <CellTemplate>
+                        <span>
+                            <MudIconButton Icon="@Icons.Material.Filled.Check"
+                                           Color="@((context.Item.Statement == "Onaylandı") ? Color.Success : Color.Default)"
+                                           @onclick="@(async () => await UpdateStatement(teminat, "Onaylandı", context.Item.TeminatId))" />
+                        </span>
+                        <span>
+                            <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                           Color="@((context.Item.Statement == "Reddedildi") ? Color.Error : Color.Default)"
+                                           @onclick="@(async () => await UpdateStatement(teminat, "Reddedildi" , context.Item.TeminatId))" />
+                        </span>
+
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="AspireApp2.Web.Model.Teminat" />
+            </PagerContent>
+        </MudDataGrid>
+    }
+    else if (currentUser.KullaniciRol == "Employee")
+    {
+        <MudDataGrid T="AspireApp2.Web.Model.Teminat" MultiSelection="true" Items="@teminatlar" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Class="mt-5"
+                     Hideable="true" RowClick="@RowClicked" RowContextMenuClick="RowRightClicked" SelectedItemsChanged="@SelectedItemsChanged">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Avans Takibi</MudText>
+                <MudSpacer />
+                <MudTextField @bind-Value="_searchString" Placeholder="Ara" Adornment="Adornment.Start" Immediate="true"
+                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <Columns>
+                <SelectColumn T="AspireApp2.Web.Model.Teminat" />
+                <PropertyColumn Property="y => y.TeminatId" Title="Id" Sortable="true" Filterable="true" />
+                <PropertyColumn Property="y => y.TeminatMektubuTarihi" Title="Mektup Tarihi" Sortable="true" Filterable="true" Format="d" />
+                <PropertyColumn Property="y => y.TeminatMektubuNo" Title="Mektup No" Sortable="true" Filterable="true" />
+                <PropertyColumn Property="y => y.TeslimTarihi" Title="Teslim Tarihi" Sortable="true" Filterable="true" Format="d" />
+                <PropertyColumn Property="y => y.TeminatMektubuDurumu" Title="Durum" Sortable="true" Filterable="true" />
+                <PropertyColumn Property="y => y.Banka" Title="Banka" Sortable="true" Filterable="true" />
+                <PropertyColumn Property="y => y.TeminatıGonderenFirma" Title="Gönderen Firma" Sortable="true" Filterable="true" />
+                <PropertyColumn Property="y => y.TeminatTutari" Title="Tutar" Sortable="true" Filterable="true" />
+                <PropertyColumn Property="y => y.TeminatParaBirimi" Title="Para Birimi" Sortable="true" Filterable="true" />
+                <PropertyColumn Property="y => y.TeminatBitisTarihi" Title="Bitiş Tarihi" Sortable="true" Filterable="true" Format="d" />
+                <PropertyColumn Property="y => y.Statement" Title="Statement" Sortable="true" Filterable="true" />
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="AspireApp2.Web.Model.Teminat" />
+            </PagerContent>
+        </MudDataGrid>
+    }
+}
+
+@code {
+    private List<AspireApp2.Web.Model.Teminat> teminatlar = new List<AspireApp2.Web.Model.Teminat>();
+    private string _searchString;
+    private List<string> _events = new();
+    private Kullanici currentUser;
+    Teminat teminat = new Teminat();
+    private bool isFirstLoad = true;
+
+
+    // quick filter - filter globally across multiple columns with the same input
+    private Func<AspireApp2.Web.Model.Teminat, bool> _quickFilter => x =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if (x.TeminatMektubuDurumu.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (x.Banka.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (x.TeminatıGonderenFirma.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCurrentUser();
+
+        try
+        {
+            teminatlar = await DbContext.Teminatlar.ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Veri çekiminde hata oluştu: {ex.Message}");
+        }
+
+        StateHasChanged();
+    }
+
+    void RowClicked(DataGridRowClickEventArgs<AspireApp2.Web.Model.Teminat> args)
+    {
+        _events.Insert(0, $"Event = RowClick, Index = {args.RowIndex}, Data = {System.Text.Json.JsonSerializer.Serialize(args.Item)}");
+    }
+
+    void RowRightClicked(DataGridRowClickEventArgs<AspireApp2.Web.Model.Teminat> args)
+    {
+        _events.Insert(0, $"Event = RowRightClick, Index = {args.RowIndex}, Data = {System.Text.Json.JsonSerializer.Serialize(args.Item)}");
+    }
+
+    void SelectedItemsChanged(HashSet<AspireApp2.Web.Model.Teminat> items)
+    {
+        _events.Insert(0, $"Event = SelectedItemsChanged, Data = {System.Text.Json.JsonSerializer.Serialize(items)}");
+    }
+
+    // Pop Dialog --------------------------------------------------------------------------------------------------------------------------------
+
+    private async Task OpenDialogAsync()
+    {
+        // Dialog Ayarları: 
+        var options = new DialogOptions
+        { 
+            CloseOnEscapeKey = true,
+            MaxWidth = MaxWidth.Large, 
+            FullWidth = true 
+        };
+
+        var parameters = new DialogParameters();
+        // var dialog = Dialog.Show<Dialog>("Veri Ekleme", parameters, options);
+        var dialog = Dialog.Show<Dialog>("Veri Ekleme", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            Console.WriteLine("Dialog OK clicked");
+        }
+    }
+
+    private async Task UpdateStatement(Teminat teminat, string statement, int Id)
+    {
+        try
+        {
+            teminat.Statement = statement;
+            var teminat2 = await DbContext.Teminatlar.FirstOrDefaultAsync(_ => _.TeminatId == Id);
+            teminat2.Statement = statement;
+            DbContext.Teminatlar.Update(teminat2);
+            await DbContext.SaveChangesAsync();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Hata: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task LoadCurrentUser()
+    {
+        try
+        {
+            var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "currentUser");
+            if (!string.IsNullOrEmpty(json))
+            {
+                currentUser = JsonSerializer.Deserialize<Kullanici>(json);
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+
+        StateHasChanged();
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/login", true);
+    }
+
+    private void RefreshPage()
+    {
+        Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+    }
+}
