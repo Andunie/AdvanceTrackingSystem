@@ -1,6 +1,6 @@
-# AdvanceTrackingSystem Project
+# AdvancedTrackingSystem Project
 
-**AdvanceTrackingSystem** is a cutting-edge web application designed for efficient tracking and management of resources, processes, or personnel. Built using modern technologies such as **Aspire.Net**, **MudBlazor**, **MS SQL**, and **API** integrations, it offers real-time tracking, dynamic data updates, and a user-friendly interface.
+**AdvancedTrackingSystem** is a cutting-edge web application designed for efficient tracking and management of resources, processes, or personnel. Built using modern technologies such as **Aspire.Net**, **MudBlazor**, **MS SQL**, and **API** integrations, it offers real-time tracking, dynamic data updates, and a user-friendly interface.
 
 ## Features
 
